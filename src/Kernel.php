@@ -1,29 +1,38 @@
 <?php
 
 namespace Spacers\Framework;
+
+use Spacers\Framework\Component\Dotenv;
 use Spacers\Framework\Constant\Attribute\Route;
+use Spacers\Framework\Controller\AbstractController;
 use Spacers\Framework\Exception\NotFoundExcetion;
-
-
+use Spacers\Framework\Request\Request;
+use Spacers\Framework\Response\FileResponse;
 
 final class Kernel
 {
-    public static function init(mixed $callback = null, array $environments = [])
+    public static function init(callable|null $callback, array ...$extra)
     {
-        set_default_environments($environments);
+        Dotenv::load(get_default_environments(), Dotenv::LOAD_LIST);
+        Dotenv::load(Dotenv::get("SPACERS_PROJECT_DIR") . '/.env', Dotenv::LOAD_FILE);
 
-        is_callable($callback) && call_user_func($callback, $environments);
-        
+        is_callable($callback) && call_user_func(
+            $callback,
+            ...$extra
+        );
 
         $controllers = self::loadControllerDir();
 
         if (empty($controllers)) {
-            return dump("controllers list is empty");
+            $default_path = realpath(__DIR__ . "/Controller/templates");
+            $filename = $default_path . "/default.tpl.php";
+            $response = new FileResponse($filename, [], [], 200);
+            return AbstractController::getInstance()->flush_content_file_processing($response);
         }
-
+        
         $current_route = new Route(
-            path: $_SERVER["REQUEST_URI"],
-            alias: "client_current_route",
+            path: parse_url($_SERVER["REQUEST_URI"], PHP_URL_PATH),
+            alias: "client_request_route",
             method: $_SERVER["REQUEST_METHOD"]
         );
 
@@ -42,7 +51,12 @@ final class Kernel
                         &&
                         $attribute->newInstance()->method === $current_route->method
                     ) {
-                        return $ControllerClass::getInstance()->{$action->name}();
+                        return $ControllerClass::getInstance()->{$action->name}(new Request(
+                            url: $_SERVER["REQUEST_URI"],
+                            method: $_SERVER["REQUEST_METHOD"],
+                            content: file_get_contents("php://input"),
+                            headers: apache_request_headers()
+                        ));
                     }
                 }
             }
@@ -53,8 +67,8 @@ final class Kernel
 
     private static function loadControllerDir(): array
     {
-        $SPACERS_PROJECT_DIR = getenv("SPACERS_PROJECT_DIR");
 
+        $SPACERS_PROJECT_DIR = Dotenv::get("SPACERS_PROJECT_DIR");
         $directory = new \RecursiveDirectoryIterator("$SPACERS_PROJECT_DIR/src/Controller");
         $iterator = new \RecursiveIteratorIterator($directory);
         $matches = new \RegexIterator($iterator, '/^.+\.php$/i', \RecursiveRegexIterator::GET_MATCH);
@@ -69,7 +83,6 @@ final class Kernel
                 // string value
                 $value[0]
             );
-
         }
 
         return $controllers;

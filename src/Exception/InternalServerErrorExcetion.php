@@ -3,7 +3,7 @@
 namespace Spacers\Framework\Exception;
 use Spacers\Framework\Constant\HTTP;
 
-class NotFoundExcetion extends \Exception
+class InternalServerErrorExcetion extends \Exception
 {
     /**
      * Redefine the exception so message isn't optional
@@ -11,7 +11,7 @@ class NotFoundExcetion extends \Exception
      * @param int $code
      * @param \Throwable|null $previous
      */
-    public function __construct(string $message, int $code = HTTP::HTTP_NOT_FOUND, \Throwable|null $previous = null)
+    public function __construct(string $message, int $code = HTTP::HTTP_INTERNAL_SERVER_ERROR, \Throwable|null $previous = null)
     {
         http_response_code($code); 
         // make sure everything is assigned properly

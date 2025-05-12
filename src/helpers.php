@@ -10,6 +10,7 @@ function get_host_location(): string
         strtolower($_SERVER['SERVER_PROTOCOL'])
     )[0] . '://' . $_SERVER['HTTP_HOST'];
 }
+
 /**
  * Summary of spacers_exception_handler
  * @param Throwable $exception
@@ -17,7 +18,7 @@ function get_host_location(): string
  */
 function spacers_exception_handler(Throwable $exception): void
 {
-    dd($exception);
+    dump($exception);
 }
 
 /**
@@ -25,16 +26,11 @@ function spacers_exception_handler(Throwable $exception): void
  * @param array $environments
  * @return array
  */
-function set_default_environments(array $environments): array
+function get_default_environments(array $environments = []): array
 {
     $environments["SPACERS_PROJECT_DIR"] = realpath(getcwd() . "/../");
-    $environments["APP_DEBUG"] = $environments["APP_DEBUG"] ?? 0;
-    $environments["APP_ENV"] = $environments["APP_ENV"] ?? "production";
-
-    foreach ($environments as $key => $value) {
-        putenv($key . "=" . $value);
-    }
-
+    $environments["APP_DEBUG"] = isset($environments["APP_DEBUG"]) ? ((bool) $environments["APP_DEBUG"]) : false;
+    $environments["APP_ENV"] = isset($environments["APP_ENV"]) ? ((bool) $environments["APP_ENV"]) : "production";
     return $environments;
 }
 /**
@@ -43,33 +39,24 @@ function set_default_environments(array $environments): array
  */
 function is_debug(): bool
 {
-    return (bool) getenv("APP_DEBUG");
+    return (bool) getenv("APP_DEBUG", false);
 }
+
 /**
- * Summary of json_validate
- * @param string $string
- * @return bool
+ * Build template with attributes vars
+ * @param string $fimename template filename (index.tpl.php)
+ * @param array $attributes 
+ * @return string
  */
-function json_validate(string $string): bool
-{
-    json_decode($string);
-
-    return json_last_error() === JSON_ERROR_NONE;
-}
-
 function render_template(string $fimename, array $attributes = []): string
 {
+
+    ob_start();
     foreach ($attributes as $key => $value) {
         $$key = $value;
     }
-    try {
-        ob_start();
-        require $fimename;
-        $content = ob_get_clean();
-        flush();
-        return $content;
-    } catch (\Throwable $th) {
-        throw new \Exception("Templat error", 0, $th);
-        exit(0);
-    }
+    require $fimename;
+    $content = ob_get_clean();
+    ob_end_flush();
+    return $content;
 }

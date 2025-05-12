@@ -6,7 +6,13 @@ use Spacers\Framework\Exception\NotFoundExcetion;
 class File
 {
     protected string $mimetype;
-    protected array $path;
+    protected array $filepath;
+    /**
+     * Summary of __construct
+     * @param string $filename
+     * @throws \Spacers\Framework\Exception\NotFoundExcetion
+     * @return void
+     */
     public function __construct(
         protected string $filename
     ) {
@@ -14,24 +20,39 @@ class File
             throw new NotFoundExcetion("File source '{$this->filename}' not found");
         }
         $this->mimetype = mime_content_type($this->filename);
-        $this->path = pathinfo($this->filename);
+        $this->filepath = pathinfo($this->filename);
 
     }
+    /**
+     * Summary of getFilename
+     * @return string
+     */
     public function getFilename(): string
     {
         return $this->filename;
     }
-    public function getMimetype(): string
+    /**
+     * Summary of getMimetype
+     * @return string|bool
+     */
+    public function getMimetype(): string|bool
     {
         return $this->mimetype;
     }
-    public function getContent(): string
+    /**
+     * Summary of getContent
+     * @return bool|string
+     */
+    public function getContent(): string|bool
     {
         return file_get_contents($this->filename);
     }
-
-    public function getPath(): array
+    /**
+     * Summary of getPath
+     * @return array|string
+     */
+    public function getPath(): array|string
     {
-        return $this->path;
+        return $this->filepath;
     }
 }

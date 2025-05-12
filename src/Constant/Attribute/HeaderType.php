@@ -12,6 +12,11 @@ abstract class AbstractType
 #[\Attribute]
 class HeaderType extends AbstractType
 {
+    /**
+     * Summary of __construct
+     * @param string $name
+     * @param string $value
+     */
     public function __construct(
         protected string $name,
         protected string $value

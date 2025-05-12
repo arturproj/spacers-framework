@@ -1,6 +1,8 @@
 <?php
 
 namespace Spacers\Framework\Controller;
+
+use Spacers\Framework\Component\Dotenv;
 use Spacers\Framework\Constant\Attribute\File;
 use Spacers\Framework\Constant\Attribute\HeaderType;
 use Spacers\Framework\Constant\Pattern\Singleton;
@@ -32,7 +34,7 @@ class AbstractController extends Singleton implements AbstractControllerInterfac
      * @param int $code
      * @return \Spacers\Framework\Response\Response
      */
-    protected function json($data, array $headers = [], int $code = 200): Response
+    public function json($data, array $headers = [], int $code = 200): Response
     {
         $response = new JsonResponse($data, $headers, $code);
         $this->flush_content_file_processing($response);
@@ -48,9 +50,9 @@ class AbstractController extends Singleton implements AbstractControllerInterfac
      * @throws \Spacers\Framework\Exception\NotFoundExcetion
      * @return \Spacers\Framework\Response\Response
      */
-    protected function render(string $filename, array $proprieties = [], array $headers = [], int $code = 200): Response
+    public function render(string $filename, array $proprieties = [], array $headers = [], int $code = 200): Response
     {
-        $template_path = getenv("SPACERS_PROJECT_DIR") . "/templates";
+        $template_path = Dotenv::get("SPACERS_PROJECT_DIR") . "/src/View";
 
         if (!is_dir($template_path)) {
             throw new NotFoundExcetion("Template directory '$template_path' not found.");
@@ -65,11 +67,14 @@ class AbstractController extends Singleton implements AbstractControllerInterfac
         return $response;
     }
 
- 
-    private function flush_content_file_processing(Response $response): void
+    /**
+     * Summary of flush_content_file_processing
+     * @param \Spacers\Framework\Response\Response $response
+     */
+    public function flush_content_file_processing(Response $response)
     {
         if (!headers_sent()) {
-            header("HTTP/3 $response->code");
+            header("HTTP/1.1 $response->code");
             foreach ($response->headers as $header) {
                 header("$header->name: $header->value");
             }

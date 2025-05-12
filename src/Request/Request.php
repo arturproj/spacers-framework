@@ -1,33 +1,29 @@
 <?php
-namespace Spacers\Framework\Request;
 
-use \Spacers\Framework\Constant\Attribute\Route;
+namespace Spacers\Framework\Request;
 
 class Request
 {
-    protected Route $route;
-    protected string $content;
-    protected array $headers; 
+    protected string $path;
+    protected mixed $parameters = [];
+
     public function __construct(
+        string $url,
+        protected string $method,
+        protected ?string $content = "",
+        protected array $headers = []
     ) {
-        try {
-            $this->route = new Route(
-                path: $_SERVER["REQUEST_URI"],
-                alias: "client_current_route",
-                method: $_SERVER["REQUEST_METHOD"]
-            );
-        } catch (\Throwable $th) {
-            throw $th;
+        $request = parse_url($url);
+        // dump($url, $method, $request);
+
+        $this->path = $request["path"];
+
+        if (key_exists("query", $request)) {
+            parse_str($request["query"], $parsed_query);
+            $this->parameters["query"] = $parsed_query;
         }
-        try {
-            $this->content = file_get_contents("php://input");
-        } catch (\Throwable $th) {
-            $this->content = "";
-        }
-        try {
-            $this->headers = apache_request_headers();
-        } catch (\Throwable $th) {
-            $this->headers = [];
+        if ($content && json_validate($content)) {
+            $this->parameters["request"] = json_decode($content, true);
         }
     }
     public function getContent(): string
@@ -37,7 +33,7 @@ class Request
 
     public function getMethod(): string
     {
-        return $this->route->method;
+        return $this->method;
     }
 
     public function getHeaders(): array

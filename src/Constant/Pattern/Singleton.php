@@ -38,6 +38,7 @@ class Singleton
 
     /**
      * The method you use to get the Singleton's instance.
+     * @return object
      */
     public static function getInstance(): object
     {
