@@ -14,7 +14,6 @@ class Request
         protected array $headers = []
     ) {
         $request = parse_url($url);
-        // dump($url, $method, $request);
 
         $this->path = $request["path"];
 
@@ -22,9 +21,9 @@ class Request
             parse_str($request["query"], $parsed_query);
             $this->parameters["query"] = $parsed_query;
         }
-        if ($content && json_validate($content)) {
-            $this->parameters["request"] = json_decode($content, true);
-        }
+
+        $this->parameters["body"] = array_merge(json_decode($content, true) ?? [], $_POST);
+
     }
     public function getContent(): string
     {
@@ -39,14 +38,5 @@ class Request
     public function getHeaders(): array
     {
         return $this->headers;
-    }
-
-    public function toArray(): array
-    {
-        if (json_validate($this->content)) {
-            return json_decode($this->content, true);
-        }
-
-        return [];
     }
 }

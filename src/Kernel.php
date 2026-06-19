@@ -29,7 +29,7 @@ final class Kernel
             $response = new FileResponse($filename, [], [], 200);
             return AbstractController::getInstance()->flush_content_file_processing($response);
         }
-        
+
         $current_route = new Route(
             path: parse_url($_SERVER["REQUEST_URI"], PHP_URL_PATH),
             alias: "client_request_route",
@@ -39,24 +39,36 @@ final class Kernel
         foreach ($controllers as $ControllerClass) {
             /** @var \ReflectionClass $controller */
             $controller = self::getReflectedController($ControllerClass);
-            ;
+
 
             foreach ($controller->getMethods(\ReflectionMethod::IS_PUBLIC) as $key => $action) {
                 foreach ($action->getAttributes() as $key => $attribute) {
-
+                    $params = [];
                     if (
                         $attribute->newInstance() instanceof Route
                         &&
-                        $attribute->newInstance()->path === $current_route->path
+                        self::matchRoute($attribute->newInstance()->path, $current_route->path, $params)
                         &&
-                        $attribute->newInstance()->method === $current_route->method
+                        (
+                            $attribute->newInstance()->method === $current_route->method
+                            ||
+                            (
+                                is_array($attribute->newInstance()->method)
+                                &&
+                                in_array($current_route->method, $attribute->newInstance()->method)
+                            )
+                        )
                     ) {
-                        return $ControllerClass::getInstance()->{$action->name}(new Request(
+
+                        $request = new Request(
                             url: $_SERVER["REQUEST_URI"],
                             method: $_SERVER["REQUEST_METHOD"],
                             content: file_get_contents("php://input"),
                             headers: apache_request_headers()
-                        ));
+                        );
+                        $args = array_merge(array_values($params), [$request]);
+
+                        return $ControllerClass::getInstance()->{$action->name}(...$args);
                     }
                 }
             }
@@ -99,5 +111,22 @@ final class Kernel
         } catch (\ReflectionException $th) {
             throw new \Exception($th->getMessage(), 0, $th);
         }
+    }
+
+    private static function matchRoute($pattern, $uri, &$params)
+    {
+        $params = [];
+
+        // Sostituisce SOLO i segmenti che iniziano per ':' (subito dopo '/' o a inizio stringa)
+        $regex = preg_replace('#(?<=^|/):([\w]+)#', '([^/]+)', $pattern);
+        $regex = '#^' . $regex . '$#';
+
+        if (preg_match($regex, $uri, $matches)) {
+            preg_match_all('#(?<=^|/):([\w]+)#', $pattern, $paramNames);
+            array_shift($matches); // rimuove il match completo
+            $params = array_combine($paramNames[1], $matches);
+            return true;
+        }
+        return false;
     }
 }

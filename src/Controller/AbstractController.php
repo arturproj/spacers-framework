@@ -18,7 +18,7 @@ class AbstractController extends Singleton implements AbstractControllerInterfac
      * @param string $text
      * @param array $headers
      * @param int $code
-     * @return \Spacers\Framework\Response\Response
+     * @return Response
      */
     public function text(string $text, array $headers = [], int $code = 200): Response
     {
@@ -32,7 +32,7 @@ class AbstractController extends Singleton implements AbstractControllerInterfac
      * @param mixed $data
      * @param array $headers
      * @param int $code
-     * @return \Spacers\Framework\Response\Response
+     * @return Response
      */
     public function json($data, array $headers = [], int $code = 200): Response
     {
@@ -47,8 +47,8 @@ class AbstractController extends Singleton implements AbstractControllerInterfac
      * @param array $proprieties
      * @param array $headers
      * @param int $code
-     * @throws \Spacers\Framework\Exception\NotFoundExcetion
-     * @return \Spacers\Framework\Response\Response
+     * @throws NotFoundExcetion
+     * @return Response
      */
     public function render(string $filename, array $proprieties = [], array $headers = [], int $code = 200): Response
     {
@@ -69,7 +69,7 @@ class AbstractController extends Singleton implements AbstractControllerInterfac
 
     /**
      * Summary of flush_content_file_processing
-     * @param \Spacers\Framework\Response\Response $response
+     * @param Response $response
      */
     public function flush_content_file_processing(Response $response)
     {
