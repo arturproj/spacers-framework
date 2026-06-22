@@ -53,16 +53,19 @@ class AbstractController extends Singleton implements AbstractControllerInterfac
     public function render(string $filename, array $proprieties = [], array $headers = [], int $code = 200): Response
     {
         $template_path = Dotenv::get("SPACERS_PROJECT_DIR") . "/src/View";
-
         if (!is_dir($template_path)) {
             throw new NotFoundExcetion("Template directory '$template_path' not found.");
         }
-        $filename = $template_path . "/" . $filename;
-        if (!is_file($filename)) {
-            throw new NotFoundExcetion("Template '$filename' not found.");
+        
+        $base_filename = $template_path . "/base.tpl.php";
+
+        $template_filename = $template_path . "/" . $filename;
+        if (!is_file($template_filename)) {
+            throw new NotFoundExcetion("Template '$template_filename' not found.");
         }
 
-        $response = new FileResponse($filename, $proprieties, $headers, $code);
+        $proprieties["template"] = $template_filename;
+        $response = new FileResponse($base_filename, $proprieties, $headers, $code);
         $this->flush_content_file_processing($response);
         return $response;
     }
@@ -79,6 +82,7 @@ class AbstractController extends Singleton implements AbstractControllerInterfac
                 header("$header->name: $header->value");
             }
         }
+        dump($response);
 
         echo $response->content;
     }
