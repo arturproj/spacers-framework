@@ -82,8 +82,6 @@ class AbstractController extends Singleton implements AbstractControllerInterfac
                 header("$header->name: $header->value");
             }
         }
-        dump($response);
-
         echo $response->content;
     }
 }
